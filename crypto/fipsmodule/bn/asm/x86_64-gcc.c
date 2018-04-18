@@ -93,11 +93,11 @@
 #undef sqr
 #define sqr(r0, r1, a) __asm__("mulq %2" : "=a"(r0), "=d"(r1) : "a"(a) : "cc");
 
-BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, size_t num,
+BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num,
                           BN_ULONG w) {
   BN_ULONG c1 = 0;
 
-  if (num == 0) {
+  if (num <= 0) {
     return (c1);
   }
 
@@ -126,11 +126,10 @@ BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, size_t num,
   return c1;
 }
 
-BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, size_t num,
-                      BN_ULONG w) {
+BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w) {
   BN_ULONG c1 = 0;
 
-  if (num == 0) {
+  if (num <= 0) {
     return c1;
   }
 
@@ -157,8 +156,8 @@ BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, size_t num,
   return c1;
 }
 
-void bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, size_t n) {
-  if (n == 0) {
+void bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n) {
+  if (n <= 0) {
     return;
   }
 
@@ -185,11 +184,11 @@ void bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, size_t n) {
 }
 
 BN_ULONG bn_add_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
-                      size_t n) {
+                      int n) {
   BN_ULONG ret;
   size_t i = 0;
 
-  if (n == 0) {
+  if (n <= 0) {
     return 0;
   }
 
@@ -202,8 +201,7 @@ BN_ULONG bn_add_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
       "	adcq	(%5,%2,8),%0	\n"
       "	movq	%0,(%3,%2,8)	\n"
       "	lea	1(%2),%2	\n"
-      "	dec	%1		\n"
-      "	jnz	1b		\n"
+      "	loop	1b		\n"
       "	sbbq	%0,%0		\n"
       : "=&r"(ret), "+c"(n), "+r"(i)
       : "r"(rp), "r"(ap), "r"(bp)
@@ -213,11 +211,11 @@ BN_ULONG bn_add_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 }
 
 BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
-                      size_t n) {
+                      int n) {
   BN_ULONG ret;
   size_t i = 0;
 
-  if (n == 0) {
+  if (n <= 0) {
     return 0;
   }
 
@@ -230,8 +228,7 @@ BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
       "	sbbq	(%5,%2,8),%0	\n"
       "	movq	%0,(%3,%2,8)	\n"
       "	lea	1(%2),%2	\n"
-      "	dec	%1		\n"
-      "	jnz	1b		\n"
+      "	loop	1b		\n"
       "	sbbq	%0,%0		\n"
       : "=&r"(ret), "+c"(n), "+r"(i)
       : "r"(rp), "r"(ap), "r"(bp)
@@ -283,7 +280,7 @@ BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 
 #define sqr_add_c2(a, i, j, c0, c1, c2) mul_add_c2((a)[i], (a)[j], c0, c1, c2)
 
-void bn_mul_comba8(BN_ULONG r[16], const BN_ULONG a[8], const BN_ULONG b[8]) {
+void bn_mul_comba8(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b) {
   BN_ULONG c1, c2, c3;
 
   c1 = 0;
@@ -385,7 +382,7 @@ void bn_mul_comba8(BN_ULONG r[16], const BN_ULONG a[8], const BN_ULONG b[8]) {
   r[15] = c1;
 }
 
-void bn_mul_comba4(BN_ULONG r[8], const BN_ULONG a[4], const BN_ULONG b[4]) {
+void bn_mul_comba4(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b) {
   BN_ULONG c1, c2, c3;
 
   c1 = 0;
@@ -423,7 +420,7 @@ void bn_mul_comba4(BN_ULONG r[8], const BN_ULONG a[4], const BN_ULONG b[4]) {
   r[7] = c2;
 }
 
-void bn_sqr_comba8(BN_ULONG r[16], const BN_ULONG a[8]) {
+void bn_sqr_comba8(BN_ULONG *r, const BN_ULONG *a) {
   BN_ULONG c1, c2, c3;
 
   c1 = 0;
@@ -497,7 +494,7 @@ void bn_sqr_comba8(BN_ULONG r[16], const BN_ULONG a[8]) {
   r[15] = c1;
 }
 
-void bn_sqr_comba4(BN_ULONG r[8], const BN_ULONG a[4]) {
+void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a) {
   BN_ULONG c1, c2, c3;
 
   c1 = 0;

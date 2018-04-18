@@ -106,12 +106,20 @@ class Android(object):
         if arch == 'aarch64':
           arch = 'arm64'
 
-        blueprint.write('        linux_%s: {\n' % arch)
+        blueprint.write('        android_%s: {\n' % arch)
         blueprint.write('            srcs: [\n')
         for f in sorted(asm_files):
           blueprint.write('                "%s",\n' % f)
         blueprint.write('            ],\n')
         blueprint.write('        },\n')
+
+        if arch == 'x86' or arch == 'x86_64':
+          blueprint.write('        linux_%s: {\n' % arch)
+          blueprint.write('            srcs: [\n')
+          for f in sorted(asm_files):
+            blueprint.write('                "%s",\n' % f)
+          blueprint.write('            ],\n')
+          blueprint.write('        },\n')
 
       blueprint.write('    },\n')
       blueprint.write('}\n\n')
@@ -587,8 +595,7 @@ def ExtractVariablesFromCMakeFile(cmakefile):
 
 def main(platforms):
   cmake = ExtractVariablesFromCMakeFile(os.path.join('src', 'sources.cmake'))
-  crypto_c_files = (FindCFiles(os.path.join('src', 'crypto'), NoTestsNorFIPSFragments) +
-                    FindCFiles(os.path.join('src', 'third_party', 'fiat'), NoTestsNorFIPSFragments))
+  crypto_c_files = FindCFiles(os.path.join('src', 'crypto'), NoTestsNorFIPSFragments)
   fips_fragments = FindCFiles(os.path.join('src', 'crypto', 'fipsmodule'), OnlyFIPSFragments)
   ssl_source_files = FindCFiles(os.path.join('src', 'ssl'), NoTests)
   tool_c_files = FindCFiles(os.path.join('src', 'tool'), NoTests)
@@ -639,9 +646,8 @@ def main(platforms):
           NotSSLHeaderFiles))
 
   ssl_internal_h_files = FindHeaderFiles(os.path.join('src', 'ssl'), NoTests)
-  crypto_internal_h_files = (
-      FindHeaderFiles(os.path.join('src', 'crypto'), NoTests) +
-      FindHeaderFiles(os.path.join('src', 'third_party', 'fiat'), NoTests))
+  crypto_internal_h_files = FindHeaderFiles(
+      os.path.join('src', 'crypto'), NoTests)
 
   files = {
       'crypto': crypto_c_files,

@@ -133,7 +133,7 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b) {
     while (dif) {
       dif--;
       t1 = *(ap++);
-      t2 = t1 + 1;
+      t2 = (t1 + 1) & BN_MASK2;
       *(rp++) = t2;
       if (t2) {
         carry = 0;
@@ -162,6 +162,8 @@ int BN_add_word(BIGNUM *a, BN_ULONG w) {
   BN_ULONG l;
   int i;
 
+  w &= BN_MASK2;
+
   // degenerate case: w is zero
   if (!w) {
     return 1;
@@ -183,7 +185,7 @@ int BN_add_word(BIGNUM *a, BN_ULONG w) {
   }
 
   for (i = 0; w != 0 && i < a->top; i++) {
-    a->d[i] = l = a->d[i] + w;
+    a->d[i] = l = (a->d[i] + w) & BN_MASK2;
     w = (w > l) ? 1 : 0;
   }
 
@@ -283,12 +285,12 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b) {
     t2 = *(bp++);
     if (carry) {
       carry = (t1 <= t2);
-      t1 -= t2 + 1;
+      t1 = (t1 - t2 - 1) & BN_MASK2;
     } else {
       carry = (t1 < t2);
-      t1 -= t2;
+      t1 = (t1 - t2) & BN_MASK2;
     }
-    *(rp++) = t1;
+    *(rp++) = t1 & BN_MASK2;
   }
 
   if (carry)  // subtracted
@@ -301,7 +303,7 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b) {
     while (dif) {
       dif--;
       t1 = *(ap++);
-      t2 = t1 - 1;
+      t2 = (t1 - 1) & BN_MASK2;
       *(rp++) = t2;
       if (t1) {
         break;
@@ -322,6 +324,8 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b) {
 
 int BN_sub_word(BIGNUM *a, BN_ULONG w) {
   int i;
+
+  w &= BN_MASK2;
 
   // degenerate case: w is zero
   if (!w) {
@@ -357,7 +361,7 @@ int BN_sub_word(BIGNUM *a, BN_ULONG w) {
       a->d[i] -= w;
       break;
     } else {
-      a->d[i] -= w;
+      a->d[i] = (a->d[i] - w) & BN_MASK2;
       i++;
       w = 1;
     }
